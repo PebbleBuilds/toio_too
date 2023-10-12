@@ -13,12 +13,14 @@ public class EventScene : MonoBehaviour
     CubeManager cm;
     Cube cube;
     bool showId = false;
+    bool connected = false;
 
     async void Start()
     {
         cm = new CubeManager(connectType);
         await cm.SingleConnect();
         Debug.Log("Connected!");
+        connected = true;
         cube = cm.cubes[0];
 
         cube.buttonCallback.AddListener("EventScene", OnPressButton);
@@ -44,8 +46,14 @@ public class EventScene : MonoBehaviour
         Debug.Log("Registered!");
     }
 
-                
+    void Update()
+    {
+        if(connected)
+        {
+            Debug.Log(cube.eulers);
+        }
 
+    }
 
     void OnCollision(Cube c)
     {
