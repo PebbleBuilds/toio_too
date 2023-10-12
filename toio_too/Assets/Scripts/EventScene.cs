@@ -6,20 +6,21 @@ using toio;
 // The file name and class name must match.
 public class EventScene : MonoBehaviour
 {
-    public ConnectType connectType; 
+    public ConnectType connectType = ConnectType.Real; 
 
     float intervalTime = 0.05f;
     float elapsedTime = 0;
+    CubeManager cm;
     Cube cube;
     bool showId = false;
 
     async void Start()
     {
-        var peripheral = await new NearestScanner(connectType).Scan();
-        cube = await new CubeConnecter().Connect(peripheral);
+        cm = new CubeManager(connectType);
+        await cm.SingleConnect();
         Debug.Log("Connected!");
+        cube = cm.cubes[0];
 
-        // Callback Registration
         cube.buttonCallback.AddListener("EventScene", OnPressButton);
         cube.slopeCallback.AddListener("EventScene", OnSlope);
         cube.collisionCallback.AddListener("EventScene", OnCollision);
@@ -39,17 +40,21 @@ public class EventScene : MonoBehaviour
         await cube.ConfigMotorRead(true);
         await cube.ConfigAttitudeSensor(Cube.AttitudeFormat.Eulers, 100, Cube.AttitudeNotificationType.OnChanged);
         await cube.ConfigMagneticSensor(Cube.MagneticMode.MagnetState);
+
+        Debug.Log("Registered!");
     }
+
+                
 
 
     void OnCollision(Cube c)
     {
-        cube.PlayPresetSound(2);
+        Debug.Log("Collision");
     }
 
     void OnSlope(Cube c)
     {
-        cube.PlayPresetSound(1);
+        Debug.Log("Slope");
     }
 
     void OnPressButton(Cube c)
@@ -58,7 +63,7 @@ public class EventScene : MonoBehaviour
         {
             showId = !showId;
         }
-        cube.PlayPresetSound(0);
+        Debug.Log("Button Pressed");
     }
 
     void OnUpdateID(Cube c)
