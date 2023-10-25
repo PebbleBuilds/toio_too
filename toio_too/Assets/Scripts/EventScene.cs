@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using toio;
+using System.IO;
 
 // The file name and class name must match.
 public class EventScene : MonoBehaviour
@@ -14,13 +15,20 @@ public class EventScene : MonoBehaviour
     Cube cube;
     bool showId = false;
     bool connected = false;
+    bool updated = false;
+
+    public string file_label = "test";
+    StreamWriter writer;
 
     async void Start()
     {
+        string path = file_label + System.DateTime.UtcNow.ToString() + ".csv";
+        writer = new StreamWriter(path, true);
+        writer.WriteLine("Time,Euler0,Euler1,Euler2,ShakeLevel");
+
         cm = new CubeManager(connectType);
         await cm.SingleConnect();
-        Debug.Log("Connected!");
-        connected = true;
+        
         cube = cm.cubes[0];
 
         cube.buttonCallback.AddListener("EventScene", OnPressButton);
@@ -43,16 +51,32 @@ public class EventScene : MonoBehaviour
         await cube.ConfigAttitudeSensor(Cube.AttitudeFormat.Eulers, 100, Cube.AttitudeNotificationType.OnChanged);
         await cube.ConfigMagneticSensor(Cube.MagneticMode.MagnetState);
 
-        Debug.Log("Registered!");
+        Debug.Log("Connected!");
+        connected = true;
     }
 
     void Update()
     {
         if(connected)
         {
-            Debug.Log(cube.eulers);
+            if(!updated)
+            {
+                writer.WriteLine(
+                    (Time.time).ToString()+","+
+                    (cube.eulers).ToString()[1..^1]+","+
+                    (cube.shakeLevel).ToString()
+                );
+                updated = true;
+            } 
         }
+    }
 
+    void OnApplicationQuit()
+    {
+        Debug.Log("Application ending after " + Time.time + " seconds");
+        string path = file_label + System.DateTime.UtcNow.ToString() + ".csv";
+        Debug.Log("Output written to " + path);
+        writer.Close();
     }
 
     void OnCollision(Cube c)
@@ -112,8 +136,8 @@ public class EventScene : MonoBehaviour
 
     void OnShake(Cube c)
     {
-        if (c.shakeLevel > 5)
-            c.PlayPresetSound(4);
+        Debug.Log(c.shakeLevel);
+        updated = false;
     }
 
     void OnMotorSpeed(Cube c)
@@ -134,5 +158,6 @@ public class EventScene : MonoBehaviour
     void OnAttitude(Cube c)
     {
         Debug.Log($"attitude = {c.eulers}");
+        updated = false;
     }
 }
