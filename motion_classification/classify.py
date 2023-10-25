@@ -1,5 +1,5 @@
 import csv, os, glob
-
+import random
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, ConfusionMatrixDisplay
 
@@ -53,19 +53,38 @@ def main():
     randomLogs = loadData("./csv_data/random")
     windmillLogs = loadData("./csv_data/windmills")
     categories = [randomLogs, windmillLogs]
-    tr_x = []
-    tr_y = []
+    # Split the data into tuples of processed data and labels
+    dataPairs = []
     for i, c in enumerate(categories):
         for sample in c:
-            tr_x.append(transformSample(normalizeTime(dataTrunc(sample, 19))))
-            tr_y.append(i)
+            x = transformSample(normalizeTime(dataTrunc(sample, 15)))
+            y = i
+            dataPairs.append((x,y))
+    # Shuffle the pairs' order
+    random.seed(0)
+    random.shuffle(dataPairs)
+    tr_x = []
+    tr_y = []
+    test_x = []
+    test_y = []
+    for x,y in dataPairs[:-2]:
+        tr_x.append(x)
+        tr_y.append(y)
+    for x,y in dataPairs[-2:]:
+        test_x.append(x)
+        test_y.append(y)
     rf = RandomForestClassifier()
     rf.fit(tr_x,tr_y)
     # Looking for overfitting as a sanity check
+    print("Overfitting:")
     ps = rf.predict(tr_x)
     for p,y in zip(ps, tr_y):
         print("Predicted:", p, "\tGround Truth:", y)
-
+    print()
+    print("Validation:")
+    ps = rf.predict(test_x)
+    for p,y in zip(ps, test_y):
+        print("Predicted:", p, "\tGround Truth:", y)
 
 if __name__ == "__main__":
     main()
