@@ -55,19 +55,15 @@ public class EventScene : MonoBehaviour
         connected = true;
     }
 
-    void Update()
+    void FixedUpdate()
     {
         if(connected)
         {
-            if(!updated)
-            {
-                writer.WriteLine(
-                    (Time.time).ToString()+","+
-                    (cube.eulers).ToString()[1..^1]+","+
-                    (cube.shakeLevel).ToString()
-                );
-                updated = true;
-            } 
+            writer.WriteLine(
+                (Time.time).ToString()+","+
+                (cube.eulers).ToString()[1..^1]+","+
+                (cube.shakeLevel).ToString()
+            );
         }
     }
 

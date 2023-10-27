@@ -209,6 +209,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69f4b09c2c78641a8893808ead1fd67e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  connectType: 2
+  file_label: uniform_sampling
 --- !u!4 &1556885292
 Transform:
   m_ObjectHideFlags: 0
