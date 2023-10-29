@@ -48,8 +48,8 @@ public class EventScene : MonoBehaviour
 
         // Enable sensors
         await cube.ConfigMotorRead(true);
-        await cube.ConfigAttitudeSensor(Cube.AttitudeFormat.Eulers, 100, Cube.AttitudeNotificationType.OnChanged);
-        await cube.ConfigMagneticSensor(Cube.MagneticMode.MagnetState);
+        await cube.ConfigAttitudeSensor(Cube.AttitudeFormat.Eulers, 10, Cube.AttitudeNotificationType.OnChanged);
+        await cube.ConfigMagneticSensor(Cube.MagneticMode.MagneticForce, 20, Cube.MagneticNotificationType.Always);
 
         Debug.Log("Connected!");
         connected = true;
@@ -122,7 +122,7 @@ public class EventScene : MonoBehaviour
 
     void OnPose(Cube c)
     {
-        Debug.Log($"pose = {c.pose.ToString()}");
+        // Debug.Log($"pose = {c.pose.ToString()}");
     }
 
     void OnDoubleTap(Cube c)
@@ -132,18 +132,18 @@ public class EventScene : MonoBehaviour
 
     void OnShake(Cube c)
     {
-        Debug.Log(c.shakeLevel);
+        // Debug.Log(c.shakeLevel);
         updated = false;
     }
 
     void OnMotorSpeed(Cube c)
     {
-        Debug.Log($"motor speed: left={c.leftSpeed}, right={c.rightSpeed}");
+        // Debug.Log($"motor speed: left={c.leftSpeed}, right={c.rightSpeed}");
     }
 
     void OnMagnetState(Cube c)
     {
-        Debug.Log($"magnet state: {c.magnetState.ToString()}");
+        // Debug.Log($"magnet state: {c.magnetState.ToString()}");
     }
 
     void OnMagneticForce(Cube c)
@@ -153,7 +153,7 @@ public class EventScene : MonoBehaviour
 
     void OnAttitude(Cube c)
     {
-        Debug.Log($"attitude = {c.eulers}");
+        // Debug.Log($"attitude = {c.eulers}");
         updated = false;
     }
 }
