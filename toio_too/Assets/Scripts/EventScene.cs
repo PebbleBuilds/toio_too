@@ -13,9 +13,10 @@ public class EventScene : MonoBehaviour
     float elapsedTime = 0;
     CubeManager cm;
     Cube cube;
-    bool showId = false;
+    bool showId = true;
     bool connected = false;
     bool updated = false;
+    int onMat = 1;
 
     public string file_label = "test";
     StreamWriter writer;
@@ -24,7 +25,7 @@ public class EventScene : MonoBehaviour
     {
         string path = file_label + System.DateTime.UtcNow.ToString() + ".csv";
         writer = new StreamWriter(path, true);
-        writer.WriteLine("Time,Euler0,Euler1,Euler2,ShakeLevel");
+        writer.WriteLine("Time,Euler0,Euler1,Euler2,ShakeLevel,Pos,OnMat");
 
         cm = new CubeManager(connectType);
         await cm.SingleConnect();
@@ -49,7 +50,9 @@ public class EventScene : MonoBehaviour
         // Enable sensors
         await cube.ConfigMotorRead(true);
         await cube.ConfigAttitudeSensor(Cube.AttitudeFormat.Eulers, 10, Cube.AttitudeNotificationType.OnChanged);
-        await cube.ConfigMagneticSensor(Cube.MagneticMode.MagneticForce, 20, Cube.MagneticNotificationType.Always);
+        await cube.ConfigMagneticSensor(Cube.MagneticMode.MagneticForce, 20, Cube.MagneticNotificationType.OnChanged);
+        await cube.ConfigIDNotification(10, Cube.IDNotificationType.OnChanged);
+        await cube.ConfigIDMissedNotification(10);
 
         Debug.Log("Connected!");
         connected = true;
@@ -62,7 +65,9 @@ public class EventScene : MonoBehaviour
             writer.WriteLine(
                 (Time.time).ToString()+","+
                 (cube.eulers).ToString()[1..^1]+","+
-                (cube.shakeLevel).ToString()
+                (cube.shakeLevel).ToString() +","+
+                (cube.pos).ToString()[1..^1]+","+
+                (onMat).ToString()+","
             );
         }
     }
@@ -100,6 +105,7 @@ public class EventScene : MonoBehaviour
         {
             Debug.LogFormat("pos=(x:{0}, y:{1}), angle={2}", c.pos.x, c.pos.y, c.angle);
         }
+        onMat = 1;
     }
 
     void OnUpdateStandardID(Cube c)
@@ -112,7 +118,8 @@ public class EventScene : MonoBehaviour
 
     void OnMissedID(Cube cube)
     {
-        Debug.LogFormat("Postion ID Missed.");
+        Debug.LogFormat("Position ID Missed.");
+        onMat = 0;
     }
 
     void OnMissedStandardID(Cube c)
