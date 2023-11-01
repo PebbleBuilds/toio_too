@@ -4,11 +4,21 @@ using UnityEngine;
 using toio;
 using System.IO;
 
+
+
 // The file name and class name must match.
 public class EventScene : MonoBehaviour
 {
-    public ConnectType connectType = ConnectType.Real; 
+    public enum ExperimentMode: byte
+    {
+        NoMove = 0, StraightMove = 1
+    }
 
+    public ConnectType connectType = ConnectType.Real; 
+    public ExperimentMode expMode = ExperimentMode.NoMove;
+    //public int moveSpeed = 0;
+    public int moveDurationMs = 1000;
+    public int moveMaxSpeed = 100;
     float intervalTime = 0.05f;
     float elapsedTime = 0;
     CubeManager cm;
@@ -17,6 +27,7 @@ public class EventScene : MonoBehaviour
     bool connected = false;
     bool updated = false;
     int onMat = 1;
+    float lastMoveTime = 0;
 
     public string file_label = "test";
     StreamWriter writer;
@@ -25,7 +36,7 @@ public class EventScene : MonoBehaviour
     {
         string path = file_label + System.DateTime.UtcNow.ToString() + ".csv";
         writer = new StreamWriter(path, true);
-        writer.WriteLine("Time,Euler0,Euler1,Euler2,ShakeLevel,Pos,OnMat");
+        writer.WriteLine("Time,Euler0,Euler1,Euler2,ShakeLevel,Pos,OnMat,MotorSpeedL,MotorSpeedR");
 
         cm = new CubeManager(connectType);
         await cm.SingleConnect();
@@ -67,8 +78,27 @@ public class EventScene : MonoBehaviour
                 (cube.eulers).ToString()[1..^1]+","+
                 (cube.shakeLevel).ToString() +","+
                 (cube.pos).ToString()[1..^1]+","+
-                (onMat).ToString()+","
+                (onMat).ToString()+","+
+                (cube.leftSpeed).ToString()+","+
+                (cube.rightSpeed).ToString()
             );
+        }
+    }
+
+    void Update()
+    {
+        if(connected)
+        {
+            if(Time.time - lastMoveTime > moveDurationMs/1000)
+            {
+                if(expMode == ExperimentMode.StraightMove)
+                {
+                    Debug.Log("asdf");
+                    int speed = Random.Range(8,moveMaxSpeed);
+                    cube.Move(speed,speed,moveDurationMs);
+                    lastMoveTime = Time.time;
+                }
+            }
         }
     }
 
