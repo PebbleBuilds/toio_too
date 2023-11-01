@@ -27,6 +27,7 @@ public class EventScene : MonoBehaviour
     bool connected = false;
     bool updated = false;
     int onMat = 1;
+    int collided = 0;
     float lastMoveTime = 0;
 
     public string file_label = "test";
@@ -36,7 +37,7 @@ public class EventScene : MonoBehaviour
     {
         string path = file_label + System.DateTime.UtcNow.ToString() + ".csv";
         writer = new StreamWriter(path, true);
-        writer.WriteLine("Time,Euler0,Euler1,Euler2,ShakeLevel,Pos,OnMat,MotorSpeedL,MotorSpeedR");
+        writer.WriteLine("Time,Euler0,Euler1,Euler2,ShakeLevel,Pos,OnMat,MotorSpeedL,MotorSpeedR,Collided");
 
         cm = new CubeManager(connectType);
         await cm.SingleConnect();
@@ -64,6 +65,7 @@ public class EventScene : MonoBehaviour
         await cube.ConfigMagneticSensor(Cube.MagneticMode.MagneticForce, 20, Cube.MagneticNotificationType.OnChanged);
         await cube.ConfigIDNotification(10, Cube.IDNotificationType.OnChanged);
         await cube.ConfigIDMissedNotification(10);
+        cube.ConfigCollisionThreshold(1);
 
         Debug.Log("Connected!");
         connected = true;
@@ -80,8 +82,13 @@ public class EventScene : MonoBehaviour
                 (cube.pos).ToString()[1..^1]+","+
                 (onMat).ToString()+","+
                 (cube.leftSpeed).ToString()+","+
-                (cube.rightSpeed).ToString()
+                (cube.rightSpeed).ToString()+","+
+                collided.ToString()
             );
+            if(collided > 0)
+            {
+                collided -= 1;
+            }
         }
     }
 
@@ -113,6 +120,7 @@ public class EventScene : MonoBehaviour
     void OnCollision(Cube c)
     {
         Debug.Log("Collision");
+        collided = 100;
     }
 
     void OnSlope(Cube c)
