@@ -37,7 +37,7 @@ public class EventScene : MonoBehaviour
     {
         string path = file_label + System.DateTime.UtcNow.ToString() + ".csv";
         writer = new StreamWriter(path, true);
-        writer.WriteLine("Time,Euler0,Euler1,Euler2,ShakeLevel,Pos,OnMat,MotorSpeedL,MotorSpeedR,Collided");
+        writer.WriteLine("Time,Euler0,Euler1,Euler2,ShakeLevel,PosX, PosY,OnMat,MotorSpeedL,MotorSpeedR,Collided");
 
         cm = new CubeManager(connectType);
         await cm.SingleConnect();
