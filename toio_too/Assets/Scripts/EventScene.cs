@@ -4,7 +4,7 @@ using UnityEngine;
 using toio;
 using System.IO;
 
-
+// This code is adapted from EventScene in toio_sdk/Tutorials/1.Basic/5.Event
 
 // The file name and class name must match.
 public class EventScene : MonoBehaviour
@@ -18,7 +18,8 @@ public class EventScene : MonoBehaviour
     public ExperimentMode expMode = ExperimentMode.NoMove;
     //public int moveSpeed = 0;
     public int moveDurationMs = 1000;
-    public int moveMaxSpeed = 100;
+    public int moveMinSpeed = 50;
+    public int moveMaxSpeed = 50;
     float intervalTime = 0.05f;
     float elapsedTime = 0;
     CubeManager cm;
@@ -101,7 +102,7 @@ public class EventScene : MonoBehaviour
                 if(expMode == ExperimentMode.StraightMove)
                 {
                     Debug.Log("asdf");
-                    int speed = Random.Range(8,moveMaxSpeed);
+                    int speed = Random.Range(moveMinSpeed,moveMaxSpeed);
                     cube.Move(speed,speed,moveDurationMs);
                     lastMoveTime = Time.time;
                 }
