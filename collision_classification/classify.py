@@ -2,10 +2,16 @@ import csv, os, glob
 import random
 import numpy as np
 from numpy.fft import rfft
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, ConfusionMatrixDisplay
 from sklearn.svm import SVC
 
+from scipy.spatial import distance
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import classification_report
 
 # Load all csv file data from selected directory
 def loadData(path):
@@ -34,46 +40,57 @@ def loadData(path):
     os.chdir(cwd)
     return data
 
-# Make it explicit when we are truncating data
-def dataTrunc(data, n):
-    return data[:n]
+# https://stackoverflow.com/questions/57015499/how-to-use-dynamic-time-warping-with-knn-in-python
+def multi_feature_DTW(a, b, num_features):   
+    an = a.size
+    bn = b.size
+    pointwise_distance = distance.cdist(a.reshape(-1,1),b.reshape(-1,1))
+    cumdist = np.matrix(np.ones((an+1,bn+1)) * np.inf)
+    cumdist[0,0] = 0
 
-# Normalize (i.e. start at 0) the time for each dataset to avoid errors
-def normalizeTime(data):
-    n = data[0][0]
-    for line in data:
-        line[0] -= n
-    return data
+    for ai in range(an):
+        for bi in range(bn):
+            minimum_cost = np.min([cumdist[ai, bi+1],
+                                   cumdist[ai+1, bi],
+                                   cumdist[ai, bi]])
+            cumdist[ai+1, bi+1] = pointwise_distance[ai,bi] + minimum_cost
 
-# Transform the data from each sample into something we can feed a classifier
-def transformSample(data):
-    lines = []
-    for line in data:
-        lines += line
-    return lines
+    return cumdist[an, bn]
 
-# Take the FFT of the variables and output them (up to truncated length)
-# as one concatenated list
-def rfftFeatures(data, numFeatures, truncLen):
-    outlist = []
-    # Implicitly skip timestamp feature
-    for i in range(1,numFeatures):
-        featfft = rfft(data[i::numFeatures])
-        flat_trunc = []
-        for i in range(truncLen):
-            flat_trunc.append(featfft[i].real)
-            flat_trunc.append(featfft[i].imag)
-        outlist += flat_trunc
-    return outlist
+# Get rid of time as a feature - everything is already a uniformly sampled time series.
+def removeTimeFeature(data):
+    new_data = []
+    for row in data:
+        new_data = data[1:]
+    return new_data
 
 def main():
-    categories = [loadData("./csv_data/circle"), loadData("./csv_data/halfmills"),loadData("./csv_data/holding"),
-                    loadData("./csv_data/juggleparabola"), loadData("./csv_data/jugglesideways"),loadData("./csv_data/randomturn"),
-                    loadData("./csv_data/shaking"),loadData("./csv_data/windmill")]
+    categories = [loadData("./csv_data/november_11_collisions/hard_moving"),loadData("./csv_data/november_11_collisions/hard_still"),
+                           loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still"),
+                           loadData("./csv_data/november_11_collisions/no_collision")]
     # Split the data into tuples of processed data and labels
     dataPairs = []
-    # The length to truncate each sample at (should find a more elegant solution for this eventually)
-    trunc_len = 199
+
+    # Remove time feature of every ts and find the longest one
+    max_length = 0
+    for i, c in enumerate(categories):
+        for sample in c:
+            sample = removeTimeFeature(sample)
+            if len(sample) > max_length:
+                max_length = len(sample)
+
+    # constant pad every sample
+    print(max_length)
+    for i, c in enumerate(categories):
+        for sample in c:
+            print(len(sample))
+            sample = np.pad(sample,max_length - len(sample),mode="constant")
+
+    # stuff everything in an np array
+
+
+
+    """
     # Length to truncate fft at (based on trunc_len)
     fft_len = 100
     # Number of features per sample
@@ -85,6 +102,7 @@ def main():
             x += rfftFeatures(transformSample(sample), n_features, fft_len)
             y = i
             dataPairs.append((x,y))
+            
     # Shuffle the pairs' order
     random.seed(0)
     random.shuffle(dataPairs)
@@ -126,6 +144,7 @@ def main():
         val_count += 1
     print()
     print("Validation Accuracy: ", (val_corr/val_count))
+    """
 
 if __name__ == "__main__":
     main()
