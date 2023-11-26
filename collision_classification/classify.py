@@ -41,10 +41,14 @@ def loadData(path):
     return data
 
 # https://stackoverflow.com/questions/57015499/how-to-use-dynamic-time-warping-with-knn-in-python
-def multi_feature_DTW(a, b, num_features=11):   
-    an = a.shape[0]
-    bn = b.shape[0]
-    pointwise_distance = distance.cdist(a,b)
+def multi_feature_DTW(a, b, num_features=11):
+    a_reshaped = a.reshape(a.size//num_features,num_features)
+    b_reshaped = b.reshape(b.size//num_features,num_features)
+
+    an = a_reshaped.shape[0]
+    bn = b_reshaped.shape[0]
+
+    pointwise_distance = distance.cdist(a_reshaped,b_reshaped)
     cumdist = np.matrix(np.ones((an+1,bn+1)) * np.inf)
     cumdist[0,0] = 0
 
@@ -83,7 +87,7 @@ def main():
                 max_length = len(sample)
     
     num_features = 11
-    X_train = np.zeros((num_samples, max_length, num_features))
+    X_train = np.zeros((num_samples, max_length * num_features))
     y_train = np.zeros((num_samples))
 
     sample_idx = 0
@@ -91,13 +95,14 @@ def main():
         for sample in c:
             arr = np.asarray(sample)
             arr = np.pad(arr,[(0,max_length - len(sample)),(0,0)],mode="constant")
+            arr = arr.flatten()
             X_train[sample_idx] = arr
             y_train[sample_idx] = label
             sample_idx += 1
             
-    parameters = {'n_neighbors':[2, 4, 8]}
+    parameters = {'n_neighbors':[1]}
     knn = KNeighborsClassifier(metric=multi_feature_DTW)
-    clf = GridSearchCV(knn, parameters, cv=3, verbose=1)
+    clf = GridSearchCV(knn, parameters, cv=2, verbose=1)
     clf.fit(X_train, y_train)
 
 
