@@ -8,10 +8,12 @@ from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, r
 from sklearn.svm import SVC
 
 from scipy.spatial import distance
+from scipy.signal import decimate
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
+import time
 
 # Load all csv file data from selected directory
 def loadData(path):
@@ -41,7 +43,7 @@ def loadData(path):
     return data
 
 # https://stackoverflow.com/questions/57015499/how-to-use-dynamic-time-warping-with-knn-in-python
-def multi_feature_DTW(a, b, num_features=11):
+def multi_feature_DTW(a, b, num_features=10):
     a_reshaped = a.reshape(a.size//num_features,num_features)
     b_reshaped = b.reshape(b.size//num_features,num_features)
 
@@ -76,7 +78,7 @@ def main():
     # Split the data into tuples of processed data and labels
     dataPairs = []
 
-    # Preprocess everything into np arrays
+    # Remove time and figure out max length
     max_length = 0
     num_samples = 0
     for i, c in enumerate(categories):
@@ -86,82 +88,36 @@ def main():
             if len(sample) > max_length:
                 max_length = len(sample)
     
-    num_features = 11
-    X_train = np.zeros((num_samples, max_length * num_features))
-    y_train = np.zeros((num_samples))
-
+    num_features = 10
+    decimate_factor = 10
+    max_length = max_length // decimate_factor
+    X_all = np.zeros((num_samples, max_length * num_features))
+    y_all = np.zeros((num_samples))
+    
+    # Convert to np array, decimate, pad, and flatten
     sample_idx = 0
     for label, c in enumerate(categories):
-        for sample in c:
+        for arr in c:
             arr = np.asarray(sample)
-            arr = np.pad(arr,[(0,max_length - len(sample)),(0,0)],mode="constant")
+            arr = decimate(arr,5,axis=0)
+            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
             arr = arr.flatten()
-            X_train[sample_idx] = arr
-            y_train[sample_idx] = label
+            X_all[sample_idx] = arr
+            y_all[sample_idx] = label
             sample_idx += 1
+
+    X_train, X_val, y_train, y_val = train_test_split(X_all, y_all, test_size=0.66, random_state=42)
             
-    parameters = {'n_neighbors':[1]}
     knn = KNeighborsClassifier(metric=multi_feature_DTW)
-    clf = GridSearchCV(knn, parameters, cv=2, verbose=1)
-    clf.fit(X_train, y_train)
+    knn.fit(X_train, y_train)
 
-
-
-    """
-    # Length to truncate fft at (based on trunc_len)
-    fft_len = 100
-    # Number of features per sample
-    n_features = 11
-    for i, c in enumerate(categories):
-        for sample in c:
-            x = transformSample(normalizeTime(dataTrunc(sample, trunc_len)))
-            # Add FFT features
-            x += rfftFeatures(transformSample(sample), n_features, fft_len)
-            y = i
-            dataPairs.append((x,y))
-            
-    # Shuffle the pairs' order
-    random.seed(0)
-    random.shuffle(dataPairs)
-    tr_x = []
-    tr_y = []
-    test_x = []
-    test_y = []
-    for x,y in dataPairs[:-2]:
-        tr_x.append(x)
-        tr_y.append(y)
-    for x,y in dataPairs[-2:]:
-        test_x.append(x)
-        test_y.append(y)
-    #rf = RandomForestClassifier()
-    rf = SVC()
-    rf.fit(tr_x,tr_y)
-    # Looking for overfitting as a sanity check
-    print("Overfitting:")
-    ps = rf.predict(tr_x)
-    # Count correct and total predictions to get ratio
-    tr_corr = 0
-    tr_count = 0
-    for p,y in zip(ps, tr_y):
-        print("Predicted:", p, "\tGround Truth:", y)
-        if p == y:
-            tr_corr += 1
-        tr_count += 1
-    print()
-    print("Training Accuracy: ", (tr_corr/tr_count))
-    print()
-    val_corr = 0
-    val_count = 0
-    print("Validation:")
-    ps = rf.predict(test_x)
-    for p,y in zip(ps, test_y):
-        print("Predicted:", p, "\tGround Truth:", y)
-        if p == y:
-            val_corr += 1
-        val_count += 1
-    print()
-    print("Validation Accuracy: ", (val_corr/val_count))
-    """
+    print("Predicting...")
+    start = time.time()
+    y_pred = knn.predict(X_val)
+    print(classification_report(y_val, y_pred))
+    print("Prediction completed in this many seconds:",time.time() - start)
+    print(y_val)
+    print(y_pred)
 
 if __name__ == "__main__":
     main()
