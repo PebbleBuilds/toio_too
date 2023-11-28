@@ -68,7 +68,7 @@ def main():
     for label, c in enumerate(categories):
         for arr in c:
             arr = np.asarray(sample)
-            arr = decimate(arr,5,axis=0)
+            arr = decimate(arr,decimate_factor,axis=0)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
             arr = arr.flatten()
             X_all[sample_idx] = arr

@@ -2,6 +2,7 @@ import csv, os, glob
 import random
 import numpy as np
 
+
 # Load all csv file data from selected directory
 def loadData(path):
     #path = './csv_data'
