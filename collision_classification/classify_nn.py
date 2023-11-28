@@ -6,21 +6,24 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader, random_split
 from scipy.signal import decimate
 
-learning_rate = 1e-3
-epochs = 5
-batch_size = 2
+from torchvision import datasets
+from torchvision.transforms import ToTensor
+
+learning_rate = 1e-2
+epochs = 10
+batch_size = 1
 
 class Net(nn.Module):
 
     def __init__(self):
         super(Net, self).__init__()
-        # 1 input image channel, 6 output channels, 5x5 square convolution
+        # 1 input image channel, 6 output channels, 3x3 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(1, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.conv1 = nn.Conv2d(1, 6, 3)
+        self.conv2 = nn.Conv2d(6, 16, 3)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)  # 5*5 from image dimension
-        self.fc2 = nn.Linear(120, 84)
+        self.fc1 = nn.Linear(2608, 500)  # 3*3 from image dimension
+        self.fc2 = nn.Linear(500, 84)
         self.fc3 = nn.Linear(84, 5)
 
     def forward(self, x):
@@ -31,7 +34,7 @@ class Net(nn.Module):
         x = torch.flatten(x, 1) # flatten all dimensions except the batch dimension
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.sigmoid(self.fc3(x))
         return x
     
 def train_loop(dataloader, model, loss_fn, optimizer):
@@ -49,7 +52,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         optimizer.step()
         optimizer.zero_grad()
 
-        if batch % 100 == 0:
+        if batch % 10 == 0:
             loss, current = loss.item(), (batch + 1) * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
@@ -75,6 +78,7 @@ def test_loop(dataloader, model, loss_fn):
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
 def main():
+    torch.manual_seed(0)
     categories = [loadData("./csv_data/november_11_collisions/hard_moving"),loadData("./csv_data/november_11_collisions/hard_still"),
                            loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still"),
                            loadData("./csv_data/november_11_collisions/no_collision")]
@@ -95,7 +99,7 @@ def main():
     num_features = 10
     decimate_factor = 1
     max_length = max_length // decimate_factor
-    X_all = np.zeros((num_samples, max_length * num_features))
+    X_all = np.zeros((num_samples, 1, max_length, num_features))
     y_all = np.zeros((num_samples))
     
     # Convert to np array, decimate, pad, and flatten
@@ -104,18 +108,20 @@ def main():
         for arr in c:
             arr = np.asarray(sample)
             arr = decimate(arr,decimate_factor,axis=0)
-            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
-            arr = arr.flatten()
-            X_all[sample_idx] = arr
+            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="reflect")
+            #arr = arr.flatten()
+            X_all[sample_idx,0] = arr
+            #y = [0,0,0,0,0]
+            #y[label] = 1
             y_all[sample_idx] = label
             sample_idx += 1
 
     # Stuff into dataloaders
-    tensor_x = torch.Tensor(X_all) # transform to torch tensor
-    tensor_y = torch.Tensor(y_all)
+    tensor_x = torch.Tensor(X_all).float() # transform to torch tensor
+    tensor_y = torch.Tensor(y_all).long()
     my_dataset = TensorDataset(tensor_x,tensor_y) # create your dataset
     generator = torch.Generator().manual_seed(42)
-    train_set, val_set = random_split(my_dataset,[0.4,0.6],generator)
+    train_set, val_set = random_split(my_dataset,[0.8,0.2],generator)
     train_dataloader = DataLoader(train_set, batch_size=batch_size) # create your dataloader
     val_dataloader = DataLoader(val_set, batch_size=batch_size)
 
@@ -131,6 +137,6 @@ def main():
         train_loop(train_dataloader, model, loss_fn, optimizer)
         test_loop(val_dataloader, model, loss_fn)
     print("Done!")
-    
+
 if __name__ == "__main__":
     main()
