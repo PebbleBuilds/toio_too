@@ -36,3 +36,21 @@ def removeTimeFeature(data):
     for row in data:
         new_data.append(row[1:])
     return new_data
+
+# Get rid of other features
+def cropFeatures(data,idx_to_keep):
+    new_data = []
+    for row in data:
+        new_row = []
+        for i in idx_to_keep:
+            new_row.append(row[i])
+        new_data.append(new_row)
+    return new_data
+
+# Add FFT to numpy array
+def addFFT(data_array, feature, window_size):
+    #data_shape = list(data_array.shape)
+    #data_shape[3] = 1
+    #fft_array = np.zeros(data_shape)
+
+    #fft_array = 
