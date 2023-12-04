@@ -1,6 +1,7 @@
 import csv, os, glob
 import random
 import numpy as np
+import scipy.fftpack as fft
 
 
 # Load all csv file data from selected directory
@@ -49,8 +50,16 @@ def cropFeatures(data,idx_to_keep):
 
 # Add FFT to numpy array
 def addFFT(data_array, feature, window_size):
-    #data_shape = list(data_array.shape)
-    #data_shape[3] = 1
-    #fft_array = np.zeros(data_shape)
+    print("Adding FFT feature for numpy array feature #",feature)
+    data_shape = list(data_array.shape)
+    data_shape[3] += 1
+    new_data_array = np.zeros(data_shape)
+    if data_shape[2] % window_size != 0:
+        print("Window size of %d does not divide time length of %d",(window_size,data_shape[2]))
+        assert False
 
-    #fft_array = 
+    for i in range(0,data_shape[2],window_size):
+        new_data_array[:,0,i:i+window_size,-1] = np.abs(fft.rfft(data_array[:,0,i:i+window_size,feature],axis=1))
+    return new_data_array
+    
+    

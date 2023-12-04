@@ -9,10 +9,9 @@ from scipy.signal import decimate
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 
-learning_rate = 1e-2
+learning_rate = 1e-6
 epochs = 10
-batch_size = 1
-num_classes = 2
+batch_size = 5
 
 class Net(nn.Module):
 
@@ -40,13 +39,13 @@ class Net(nn.Module):
     
 class Net2(nn.Module):
 
-    def __init__(self, num_features, max_length):
+    def __init__(self, num_features, max_length, num_classes):
         super(Net2, self).__init__()
         # an affine operation: y = Wx + b
         self.fc0 = nn.Linear(num_features*max_length, 84)
         self.fc1 = nn.Linear(84, 500)
-        self.fc2 = nn.Linear(500,2608)
-        self.fc3 = nn.Linear(2608, 500)  # 3*3 from image dimension
+        #self.fc2 = nn.Linear(500,2608)
+        #self.fc3 = nn.Linear(2608, 500)
         self.fc4 = nn.Linear(500, 84)
         self.fc5 = nn.Linear(84, num_classes)
 
@@ -54,8 +53,9 @@ class Net2(nn.Module):
         x = torch.flatten(x, 1) # flatten all dimensions except the batch dimension
         x = F.relu(self.fc0(x))
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
+        #x = F.relu(self.fc2(x))
+        #x = F.relu(self.fc3(x))
+        x = F.dropout(x,p=0.2)
         x = F.relu(self.fc4(x))
         x = F.sigmoid(self.fc5(x))
         return x
@@ -116,7 +116,7 @@ def main():
     # Remove time and figure out max length
     max_length = 0
     num_samples = 0
-    idx_to_keep = [1,2,3,5,6]
+    idx_to_keep = [1,2,3,5,6,4]
     for i, c in enumerate(categories):
         for sample in c:
             num_samples += 1
@@ -137,17 +137,41 @@ def main():
             arr = np.asarray(sample)
             arr = decimate(arr,decimate_factor,axis=0)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="reflect")
-            #arr = arr.flatten()
+            
+
+            # 5-class classification
+            #X_all[sample_idx,0] = arr
+            #y_all[sample_idx] = label 
+            #num_classes = 5
+
+            # Classifying no collision vs collision
             X_all[sample_idx,0] = arr
-            #y_all[sample_idx] = label
             if label == 4:
-                y_all[sample_idx] = 0
+               y_all[sample_idx] = 0
             else:
-                y_all[sample_idx] = 1
+               y_all[sample_idx] = 1
+            num_classes = 2
+
+            # Classifying still vs moving vs no collision
+            # X_all[sample_idx,0] = arr
+            # if label == 0 or label == 2:
+            #    y_all[sample_idx] = 0
+            # elif label == 1 or label == 3:
+            #    y_all[sample_idx] = 1
+            # else:
+            #    y_all[sample_idx] = 2
+            # num_classes = 3
+
+            # Classifying
             sample_idx += 1
 
     # Add FFT
-
+    X_all = addFFT(X_all,0,20)
+    X_all = addFFT(X_all,1,20)
+    X_all = addFFT(X_all,2,20)
+    X_all = addFFT(X_all,3,20)
+    X_all = addFFT(X_all,4,20)
+    num_features += 5
 
     # Stuff into dataloaders
     tensor_x = torch.Tensor(X_all).float() # transform to torch tensor
@@ -159,7 +183,7 @@ def main():
     val_dataloader = DataLoader(val_set, batch_size=batch_size)
 
     # Create the net
-    model = Net2(num_features, max_length)
+    model = Net2(num_features, max_length, num_classes)
 
     # create your optimizer
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
