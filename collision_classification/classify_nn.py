@@ -9,7 +9,7 @@ from scipy.signal import decimate
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 
-learning_rate = 1e-6
+learning_rate = 1e-4
 epochs = 10
 batch_size = 5
 
@@ -42,12 +42,12 @@ class Net2(nn.Module):
     def __init__(self, num_features, max_length, num_classes):
         super(Net2, self).__init__()
         # an affine operation: y = Wx + b
-        self.fc0 = nn.Linear(num_features*max_length, 84)
-        self.fc1 = nn.Linear(84, 500)
+        self.fc0 = nn.Linear(num_features*max_length, 20)
+        self.fc1 = nn.Linear(20, 84)
         #self.fc2 = nn.Linear(500,2608)
         #self.fc3 = nn.Linear(2608, 500)
-        self.fc4 = nn.Linear(500, 84)
-        self.fc5 = nn.Linear(84, num_classes)
+        self.fc4 = nn.Linear(84, 20)
+        self.fc5 = nn.Linear(20, num_classes)
 
     def forward(self, x):
         x = torch.flatten(x, 1) # flatten all dimensions except the batch dimension
@@ -140,17 +140,17 @@ def main():
             
 
             # 5-class classification
-            #X_all[sample_idx,0] = arr
-            #y_all[sample_idx] = label 
-            #num_classes = 5
+            X_all[sample_idx,0] = arr
+            y_all[sample_idx] = label 
+            num_classes = 5
 
             # Classifying no collision vs collision
-            X_all[sample_idx,0] = arr
-            if label == 4:
-               y_all[sample_idx] = 0
-            else:
-               y_all[sample_idx] = 1
-            num_classes = 2
+            #X_all[sample_idx,0] = arr
+            #if label == 4:
+            #   y_all[sample_idx] = 0
+            #else:
+            #   y_all[sample_idx] = 1
+            #num_classes = 2
 
             # Classifying still vs moving vs no collision
             # X_all[sample_idx,0] = arr
@@ -162,8 +162,11 @@ def main():
             #    y_all[sample_idx] = 2
             # num_classes = 3
 
-            # Classifying
             sample_idx += 1
+
+    # Normalize over time
+    norms = np.linalg.norm(X_all,axis=2).reshape(num_samples,1,1,num_features)
+    X_all = np.divide(X_all,norms)
 
     # Add FFT
     X_all = addFFT(X_all,0,20)
