@@ -61,4 +61,10 @@ def addFFT(data_array, feature, window_size):
     for i in range(0,data_shape[2],window_size):
         new_data_array[:,0,i:i+window_size,-1] = np.abs(fft.rfft(data_array[:,0,i:i+window_size,feature],axis=1))
     return new_data_array
+
+#
+def normalizeFeatures(arr):
+    a = (arr-np.min(arr,axis=0))
+    b = (np.max(arr,axis=0)-np.min(arr,axis=0))
+    return np.divide(a, b, out=np.zeros_like(a), where=b!=0)
     

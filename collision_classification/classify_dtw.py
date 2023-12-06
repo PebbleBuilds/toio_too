@@ -73,6 +73,7 @@ def main():
             arr = np.asarray(arr)
             arr = decimate(arr,decimate_factor,axis=0)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
+            arr = normalizeFeatures(arr)
             arr = arr.flatten()
             X_all[sample_idx] = arr
             y_all[sample_idx] = label

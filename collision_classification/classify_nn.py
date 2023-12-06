@@ -9,9 +9,9 @@ from scipy.signal import decimate
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 
-learning_rate = 1e-4
+learning_rate = 1e-2
 epochs = 10
-batch_size = 5
+batch_size = 1
 
 class Net(nn.Module):
 
@@ -97,6 +97,7 @@ def test_loop(dataloader, model, loss_fn):
     with torch.no_grad():
         for X, y in dataloader:
             pred = model(X)
+            #print("p:",pred.argmax(1),"y:",y)
             test_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
@@ -137,7 +138,7 @@ def main():
             arr = np.asarray(arr)
             arr = decimate(arr,decimate_factor,axis=0)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="reflect")
-            
+            arr = normalizeFeatures(arr)
 
             # 5-class classification
             X_all[sample_idx,0] = arr
