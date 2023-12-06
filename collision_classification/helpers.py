@@ -62,4 +62,3 @@ def addFFT(data_array, feature, window_size):
         new_data_array[:,0,i:i+window_size,-1] = np.abs(fft.rfft(data_array[:,0,i:i+window_size,feature],axis=1))
     return new_data_array
     
-    

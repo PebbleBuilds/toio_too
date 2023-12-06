@@ -10,7 +10,7 @@ from sklearn.svm import SVC
 from scipy.spatial import distance
 from scipy.signal import decimate
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn import decomposition
@@ -18,28 +18,7 @@ import time
 
 from helpers import *
 
-#from tslearn.metrics import dtw
-
-# https://stackoverflow.com/questions/57015499/how-to-use-dynamic-time-warping-with-knn-in-python
-def multi_feature_DTW(a, b, num_features=2):
-    a_reshaped = a.reshape(a.size//num_features,num_features)
-    b_reshaped = b.reshape(b.size//num_features,num_features)
-
-    an = a_reshaped.shape[0]
-    bn = b_reshaped.shape[0]
-
-    pointwise_distance = distance.cdist(a_reshaped,b_reshaped)
-    cumdist = np.matrix(np.ones((an+1,bn+1)) * np.inf)
-    cumdist[0,0] = 0
-
-    for ai in range(an):
-        for bi in range(bn):
-            minimum_cost = np.min([cumdist[ai, bi+1],
-                                   cumdist[ai+1, bi],
-                                   cumdist[ai, bi]])
-            cumdist[ai+1, bi+1] = pointwise_distance[ai,bi] + minimum_cost
-
-    return cumdist[an, bn]
+import pandas as pd
 
 def main():
     categories = [loadData("./csv_data/november_11_collisions/hard_moving"),loadData("./csv_data/november_11_collisions/hard_still"),
@@ -52,7 +31,8 @@ def main():
     # Remove time and figure out max length
     max_length = 0
     num_samples = 0
-    idx_to_keep = [5,6]
+    idx_to_keep = [1,2,3,4,5,6,7,8]
+
     for i, c in enumerate(categories):
         for sample_idx in range(0,len(c)):
             num_samples += 1
@@ -61,18 +41,21 @@ def main():
                 max_length = len(c[sample_idx])
     
     num_features = len(idx_to_keep)
-    decimate_factor = 10
+    decimate_factor = 1
     max_length = max_length // decimate_factor
     X_all = np.zeros((num_samples, max_length * num_features))
     y_all = np.zeros((num_samples))
+
+    print(max_length)
     
-    # Convert to np array, decimate, pad, PCA, and flatten
+    # Convert to np array, decimate, pad, normalize, and flatten
     sample_idx = 0
     for label, c in enumerate(categories):
         for arr in c:
             arr = np.asarray(arr)
             arr = decimate(arr,decimate_factor,axis=0)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
+            #arr = (arr-np.min(arr))/(np.max(arr)-np.min(arr))
             arr = arr.flatten()
             X_all[sample_idx] = arr
             y_all[sample_idx] = label
@@ -81,13 +64,17 @@ def main():
     X_train, X_val, y_train, y_val = train_test_split(X_all, y_all, test_size=0.2, random_state=42)
 
     np.savetxt("foo.csv", X_train, delimiter=",")
+
+    #df = pd.DataFrame (X_train)
+    #filepath = 'my_excel_file.xlsx'
+    #df.to_excel(filepath, index=False)
             
-    knn = KNeighborsClassifier(metric=multi_feature_DTW)
-    knn.fit(X_train, y_train)
+    svc = SVC(C=1,gamma="auto")
+    svc.fit(X_train, y_train)
 
     print("Predicting...")
     start = time.time()
-    y_pred = knn.predict(X_val)
+    y_pred = svc.predict(X_val)
     print(classification_report(y_val, y_pred))
     print("Prediction completed in this many seconds:",time.time() - start)
     print(y_val)

@@ -118,11 +118,11 @@ def main():
     num_samples = 0
     idx_to_keep = [1,2,3,5,6,4]
     for i, c in enumerate(categories):
-        for sample in c:
+        for sample_idx in range(0,len(c)):
             num_samples += 1
-            sample = cropFeatures(sample,idx_to_keep)
-            if len(sample) > max_length:
-                max_length = len(sample)
+            c[sample_idx] = cropFeatures(c[sample_idx],idx_to_keep)
+            if len(c[sample_idx]) > max_length:
+                max_length = len(c[sample_idx])
     
     num_features = len(idx_to_keep)
     decimate_factor = 1
@@ -134,7 +134,7 @@ def main():
     sample_idx = 0
     for label, c in enumerate(categories):
         for arr in c:
-            arr = np.asarray(sample)
+            arr = np.asarray(arr)
             arr = decimate(arr,decimate_factor,axis=0)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="reflect")
             
