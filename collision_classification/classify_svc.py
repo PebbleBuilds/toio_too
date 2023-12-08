@@ -31,7 +31,7 @@ def main():
     # Remove time and figure out max length
     max_length = 0
     num_samples = 0
-    idx_to_keep = [1,2,3]
+    idx_to_keep = [1,2,3,10]
 
     for i, c in enumerate(categories):
         for sample_idx in range(0,len(c)):
@@ -87,7 +87,7 @@ def main():
     #filepath = 'my_excel_file.xlsx'
     #df.to_excel(filepath, index=False)
             
-    svc = SVC(C=1000,gamma="scale",kernel="rbf",tol=1e-5,degree=5)
+    svc = SVC(C=100,gamma="scale",kernel="rbf",tol=1e-5,degree=5)
     svc.fit(X_train, y_train)
 
     """
