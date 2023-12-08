@@ -48,23 +48,22 @@ def cropFeatures(data,idx_to_keep):
         new_data.append(new_row)
     return new_data
 
-# Add FFT to numpy array
-def addFFT(data_array, feature, window_size):
-    print("Adding FFT feature for numpy array feature #",feature)
-    data_shape = list(data_array.shape)
-    data_shape[3] += 1
-    new_data_array = np.zeros(data_shape)
-    if data_shape[2] % window_size != 0:
-        print("Window size of %d does not divide time length of %d",(window_size,data_shape[2]))
-        assert False
-
-    for i in range(0,data_shape[2],window_size):
-        new_data_array[:,0,i:i+window_size,-1] = np.abs(fft.rfft(data_array[:,0,i:i+window_size,feature],axis=1))
-    return new_data_array
-
-#
+# normalize features right before padding
 def normalizeFeatures(arr):
     a = (arr-np.min(arr,axis=0))
     b = (np.max(arr,axis=0)-np.min(arr,axis=0))
     return np.divide(a, b, out=np.zeros_like(a), where=b!=0)
     
+# Add FFT to numpy array. For sklearn.
+def addFFT_sk(data_array, feature, window_size):
+    data_shape = list(data_array.shape)
+    data_shape[1] += 1
+    new_data_array = np.zeros(data_shape)
+    if data_shape[0] % window_size != 0:
+        print("Window size of %d does not divide time length of %d",(window_size,data_shape[1]))
+        assert False
+
+    new_data_array[0:data_array.shape[0],0:data_array.shape[1]] = data_array
+    for i in range(0,data_shape[0],window_size):
+        new_data_array[i:i+window_size,-1] = np.abs(fft.rfft(data_array[i:i+window_size,feature],axis=0))
+    return new_data_array

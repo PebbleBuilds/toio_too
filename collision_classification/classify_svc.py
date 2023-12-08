@@ -22,8 +22,8 @@ import pandas as pd
 
 def main():
     categories = [loadData("./csv_data/november_11_collisions/hard_moving"),loadData("./csv_data/november_11_collisions/hard_still"),
-                           loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still"),
-                           loadData("./csv_data/november_11_collisions/no_collision")]
+                           loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still")]#,
+                           #loadData("./csv_data/november_11_collisions/no_collision")]
     
     # Split the data into tuples of processed data and labels
     dataPairs = []
@@ -31,7 +31,7 @@ def main():
     # Remove time and figure out max length
     max_length = 0
     num_samples = 0
-    idx_to_keep = [1,2,3,4,5,6,7,8]
+    idx_to_keep = [5,6]
 
     for i, c in enumerate(categories):
         for sample_idx in range(0,len(c)):
@@ -40,7 +40,7 @@ def main():
             if len(c[sample_idx]) > max_length:
                 max_length = len(c[sample_idx])
     
-    num_features = len(idx_to_keep)
+    num_features = len(idx_to_keep) + 2
     decimate_factor = 1
     max_length = max_length // decimate_factor
     X_all = np.zeros((num_samples, max_length * num_features))
@@ -50,18 +50,35 @@ def main():
     
     # Convert to np array, decimate, pad, normalize, and flatten
     sample_idx = 0
-    for label, c in enumerate(categories):
+    for i, c in enumerate(categories):
         for arr in c:
             arr = np.asarray(arr)
             arr = decimate(arr,decimate_factor,axis=0)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
+            arr = addFFT_sk(arr,0,30)
+            arr = addFFT_sk(arr,1,30)
             arr = normalizeFeatures(arr)
             arr = arr.flatten()
             X_all[sample_idx] = arr
-            y_all[sample_idx] = label
+
+            # 5-fold classification
+            #y_all[sample_idx] = i
+
+            # Classifying soft vs hard
+            #if i == 0 or i == 1:
+            #    y_all[sample_idx] = 0
+            #else:
+            #    y_all[sample_idx] = 1
+
+            # Classifying moving vs still
+            if i == 0 or i == 2:
+                y_all[sample_idx] = 0
+            else:
+                y_all[sample_idx] = 1
+
             sample_idx += 1
 
-    X_train, X_val, y_train, y_val = train_test_split(X_all, y_all, test_size=0.2, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(X_all, y_all, test_size=0.3, random_state=42)
 
     np.savetxt("foo.csv", X_train, delimiter=",")
 
@@ -69,7 +86,7 @@ def main():
     #filepath = 'my_excel_file.xlsx'
     #df.to_excel(filepath, index=False)
             
-    svc = SVC(C=1,gamma="auto")
+    svc = SVC(C=1000,gamma="scale",kernel="poly",tol=1e-5,degree=5)
     svc.fit(X_train, y_train)
 
     print("Predicting...")

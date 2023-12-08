@@ -13,6 +13,22 @@ learning_rate = 1e-2
 epochs = 10
 batch_size = 1
 
+# Add FFT to numpy array.
+def addFFT(data_array, feature, window_size):
+    print("Fix this! it's not keeping the old data")
+    assert False
+    print("Adding FFT feature for numpy array feature #",feature)
+    data_shape = list(data_array.shape)
+    data_shape[3] += 1
+    new_data_array = np.zeros(data_shape)
+    if data_shape[2] % window_size != 0:
+        print("Window size of %d does not divide time length of %d",(window_size,data_shape[2]))
+        assert False
+
+    for i in range(0,data_shape[2],window_size):
+        new_data_array[:,0,i:i+window_size,-1] = np.abs(fft.rfft(data_array[:,0,i:i+window_size,feature],axis=1))
+    return new_data_array
+
 class Net(nn.Module):
 
     def __init__(self):
@@ -166,8 +182,8 @@ def main():
             sample_idx += 1
 
     # Normalize over time
-    norms = np.linalg.norm(X_all,axis=2).reshape(num_samples,1,1,num_features)
-    X_all = np.divide(X_all,norms)
+    #norms = np.linalg.norm(X_all,axis=2).reshape(num_samples,1,1,num_features)
+    #X_all = np.divide(X_all,norms)
 
     # Add FFT
     X_all = addFFT(X_all,0,20)
