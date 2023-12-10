@@ -31,7 +31,7 @@ def main():
     # Remove time and figure out max length
     max_length = 0
     num_samples = 0
-    idx_to_keep = [5,6]
+    idx_to_keep = [1,2,3]
 
     for i, c in enumerate(categories):
         for sample_idx in range(0,len(c)):
@@ -40,7 +40,7 @@ def main():
             if len(c[sample_idx]) > max_length:
                 max_length = len(c[sample_idx])
     
-    num_features = len(idx_to_keep)
+    num_features = len(idx_to_keep) 
     X_all = np.zeros((num_samples, max_length * num_features))
     y_all = np.zeros((num_samples))
 
@@ -50,27 +50,33 @@ def main():
     sample_idx = 0
     for i, c in enumerate(categories):
         for arr in c:
-            arr = np.asarray(arr)
-            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
-            arr = addGradient_sk(arr,0)
-            arr = addGradient_sk(arr,1)
-            arr = arr[:,2:].flatten()
-            X_all[sample_idx] = arr
+            # Classifying moving vs still (use idx 5 and 6)
+            # if i == 0 or i == 2:
+            #     y_all[sample_idx] = 0
+            # else:
+            #     y_all[sample_idx] = 1
+            # arr = np.asarray(arr)
+            # arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
+            # arr = addGradient_sk(arr,0)
+            # arr = addGradient_sk(arr,1)
+            # arr = arr[:,2:].flatten()
+            # X_all[sample_idx] = arr
 
             # 5-fold classification
             #y_all[sample_idx] = i
 
             # Classifying soft vs hard
-            #if i == 0 or i == 1:
-            #    y_all[sample_idx] = 0
-            #else:
-            #    y_all[sample_idx] = 1
-
-            # Classifying moving vs still
-            if i == 0 or i == 2:
+            if i == 0 or i == 1:
                 y_all[sample_idx] = 0
             else:
                 y_all[sample_idx] = 1
+            arr = np.asarray(arr)
+            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
+            #arr = addFFT_sk(arr,0,110)
+            #arr = addFFT_sk(arr,1,110)
+            #arr = addFFT_sk(arr,2,110)
+            arr = arr.flatten()
+            X_all[sample_idx] = arr
 
             sample_idx += 1
 
@@ -82,7 +88,7 @@ def main():
     #filepath = 'my_excel_file.xlsx'
     #df.to_excel(filepath, index=False)
             
-    svc = SVC(C=10,gamma="scale",kernel="rbf",tol=1e-5,degree=5)
+    svc = SVC(C=10,gamma="scale",kernel="rbf",tol=1e-5)
     svc.fit(X_train, y_train)
 
     """
