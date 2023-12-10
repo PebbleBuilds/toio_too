@@ -41,8 +41,6 @@ def main():
                 max_length = len(c[sample_idx])
     
     num_features = len(idx_to_keep)
-    decimate_factor = 1
-    max_length = max_length // decimate_factor
     X_all = np.zeros((num_samples, max_length * num_features))
     y_all = np.zeros((num_samples))
 
@@ -53,8 +51,7 @@ def main():
     for i, c in enumerate(categories):
         for arr in c:
             arr = np.asarray(arr)
-            arr = decimate(arr,decimate_factor,axis=0)
-            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
+            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
             arr = addGradient_sk(arr,0)
             arr = addGradient_sk(arr,1)
             arr = arr[:,2:].flatten()
