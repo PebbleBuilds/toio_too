@@ -31,7 +31,7 @@ def main():
     # Remove time and figure out max length
     max_length = 0
     num_samples = 0
-    idx_to_keep = [1,2,3,10]
+    idx_to_keep = [5,6]
 
     for i, c in enumerate(categories):
         for sample_idx in range(0,len(c)):
@@ -40,7 +40,7 @@ def main():
             if len(c[sample_idx]) > max_length:
                 max_length = len(c[sample_idx])
     
-    num_features = len(idx_to_keep) + 3
+    num_features = len(idx_to_keep)
     decimate_factor = 1
     max_length = max_length // decimate_factor
     X_all = np.zeros((num_samples, max_length * num_features))
@@ -55,27 +55,25 @@ def main():
             arr = np.asarray(arr)
             arr = decimate(arr,decimate_factor,axis=0)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
-            arr = addFFT_sk(arr,0,110)
-            arr = addFFT_sk(arr,1,110)
-            arr = addFFT_sk(arr,2,110)
-            arr = normalizeFeatures(arr)
-            arr = arr.flatten()
+            arr = addGradient_sk(arr,0)
+            arr = addGradient_sk(arr,1)
+            arr = arr[:,2:].flatten()
             X_all[sample_idx] = arr
 
             # 5-fold classification
             #y_all[sample_idx] = i
 
             # Classifying soft vs hard
-            if i == 0 or i == 1:
-                y_all[sample_idx] = 0
-            else:
-                y_all[sample_idx] = 1
-
-            # Classifying moving vs still
-            #if i == 0 or i == 2:
+            #if i == 0 or i == 1:
             #    y_all[sample_idx] = 0
             #else:
             #    y_all[sample_idx] = 1
+
+            # Classifying moving vs still
+            if i == 0 or i == 2:
+                y_all[sample_idx] = 0
+            else:
+                y_all[sample_idx] = 1
 
             sample_idx += 1
 
@@ -87,7 +85,7 @@ def main():
     #filepath = 'my_excel_file.xlsx'
     #df.to_excel(filepath, index=False)
             
-    svc = SVC(C=100,gamma="scale",kernel="rbf",tol=1e-5,degree=5)
+    svc = SVC(C=10,gamma="scale",kernel="rbf",tol=1e-5,degree=5)
     svc.fit(X_train, y_train)
 
     """

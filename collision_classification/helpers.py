@@ -62,8 +62,16 @@ def addFFT_sk(data_array, feature, window_size):
     if data_shape[0] % window_size != 0:
         print("Window size of %d does not divide time length of %d",(window_size,data_shape[1]))
         assert False
-
     new_data_array[0:data_array.shape[0],0:data_array.shape[1]] = data_array
+
     for i in range(0,data_shape[0],window_size):
         new_data_array[i:i+window_size,-1] = np.abs(fft.rfft(data_array[i:i+window_size,feature],axis=0))
+    return new_data_array
+
+def addGradient_sk(data_array, feature):
+    data_shape = list(data_array.shape)
+    data_shape[1] += 1
+    new_data_array = np.zeros(data_shape)
+    new_data_array[0:data_array.shape[0],0:data_array.shape[1]] = data_array
+    new_data_array[:,-1] = np.gradient(data_array[:,feature])
     return new_data_array
