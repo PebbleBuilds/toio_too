@@ -31,7 +31,7 @@ def main():
     # Remove time and figure out max length
     max_length = 0
     num_samples = 0
-    idx_to_keep = [1,2,3]
+    idx_to_keep = [1,2]
 
     for i, c in enumerate(categories):
         for sample_idx in range(0,len(c)):
@@ -74,8 +74,8 @@ def main():
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
             arr = addCepstral_sk(arr,0,110)
             arr = addCepstral_sk(arr,1,110)
-            arr = addCepstral_sk(arr,2,110)
-            arr = arr[:,3:].flatten()
+            #arr = addCepstral_sk(arr,2,110)
+            arr = arr[:,num_features:].flatten()
             X_all[sample_idx] = arr
 
             sample_idx += 1
@@ -88,7 +88,7 @@ def main():
     #filepath = 'my_excel_file.xlsx'
     #df.to_excel(filepath, index=False)
             
-    svc = SVC(C=100,gamma="scale",kernel="rbf",tol=1e-5)
+    svc = SVC(C=10,gamma="scale",kernel="rbf",tol=1e-5)
     svc.fit(X_train, y_train)
 
     """
