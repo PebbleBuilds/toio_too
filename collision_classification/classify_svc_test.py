@@ -28,7 +28,7 @@ def main():
                            loadData("./csv_data/dec_10_collisions/soft_moving"),loadData("./csv_data/dec_10_collisions/soft_still")]
 
     # Crop features. Max length will be 660.
-    idx_to_keep = [5,6]
+    idx_to_keep = [1,2]
     max_length = 660
 
     num_samples_train = 0
@@ -55,29 +55,28 @@ def main():
     for i, c in enumerate(categories_train):
         for arr in c:
             # Classifying moving vs still (use idx 5 and 6)
-            if i == 0 or i == 2:
-                y_train[sample_idx] = 0
-            else:
-                y_train[sample_idx] = 1
-            arr = np.asarray(arr)
-            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
-            arr = addGradient_sk(arr,0)
-            arr = addGradient_sk(arr,1)
-            arr = arr[:,2:].flatten()
-            X_train[sample_idx] = arr
-
-            # Classifying soft vs hard
-            # if i == 0 or i == 1:
+            # if i == 0 or i == 2:
             #     y_train[sample_idx] = 0
             # else:
             #     y_train[sample_idx] = 1
             # arr = np.asarray(arr)
             # arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
-            # arr = addFFT_sk(arr,0,110)
-            # arr = addFFT_sk(arr,1,110)
-            # arr = addFFT_sk(arr,2,110)
-            # arr = arr.flatten()
+            # arr = addGradient_sk(arr,0)
+            # arr = addGradient_sk(arr,1)
+            # arr = arr[:,2:].flatten()
             # X_train[sample_idx] = arr
+
+            # Classifying soft vs hard (use idx 1 and 2)
+            if i == 0 or i == 1:
+                y_train[sample_idx] = 0
+            else:
+                y_train[sample_idx] = 1
+            arr = np.asarray(arr)
+            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
+            arr = addCepstral_sk(arr,0,110)
+            arr = addCepstral_sk(arr,1,110)
+            arr = arr[:,num_features:].flatten()
+            X_train[sample_idx] = arr
 
             sample_idx += 1
 
@@ -86,29 +85,28 @@ def main():
     for i, c in enumerate(categories_test):
         for arr in c:
             # Classifying moving vs still (use idx 5 and 6)
-            if i == 0 or i == 2:
+            # if i == 0 or i == 2:
+            #     y_test[sample_idx] = 0
+            # else:
+            #     y_test[sample_idx] = 1
+            # arr = np.asarray(arr)
+            # arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
+            # arr = addGradient_sk(arr,0)
+            # arr = addGradient_sk(arr,1)
+            # arr = arr[:,2:].flatten()
+            # X_test[sample_idx] = arr
+
+            # Classifying soft vs hard
+            if i == 0 or i == 1:
                 y_test[sample_idx] = 0
             else:
                 y_test[sample_idx] = 1
             arr = np.asarray(arr)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
-            arr = addGradient_sk(arr,0)
-            arr = addGradient_sk(arr,1)
-            arr = arr[:,2:].flatten()
+            arr = addCepstral_sk(arr,0,110)
+            arr = addCepstral_sk(arr,1,110)
+            arr = arr[:,num_features:].flatten()
             X_test[sample_idx] = arr
-
-            # Classifying soft vs hard
-            # if i == 0 or i == 1:
-            #     y_train[sample_idx] = 0
-            # else:
-            #     y_train[sample_idx] = 1
-            # arr = np.asarray(arr)
-            # arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
-            # arr = addFFT_sk(arr,0,110)
-            # arr = addFFT_sk(arr,1,110)
-            # arr = addFFT_sk(arr,2,110)
-            # arr = arr.flatten()
-            # X_train[sample_idx] = arr
 
             sample_idx += 1
             
