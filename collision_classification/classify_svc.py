@@ -31,7 +31,7 @@ def main():
     # Remove time and figure out max length
     max_length = 0
     num_samples = 0
-    idx_to_keep = [1,2,3]
+    idx_to_keep = [1,2]
 
     for i, c in enumerate(categories):
         for sample_idx in range(0,len(c)):
@@ -40,7 +40,7 @@ def main():
             if len(c[sample_idx]) > max_length:
                 max_length = len(c[sample_idx])
     
-    num_features = len(idx_to_keep) 
+    num_features = len(idx_to_keep)
     X_all = np.zeros((num_samples, max_length * num_features))
     y_all = np.zeros((num_samples))
 
@@ -72,10 +72,10 @@ def main():
                 y_all[sample_idx] = 1
             arr = np.asarray(arr)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
-            #arr = addFFT_sk(arr,0,110)
-            #arr = addFFT_sk(arr,1,110)
-            #arr = addFFT_sk(arr,2,110)
-            arr = arr.flatten()
+            arr = addCepstral_sk(arr,0,110)
+            arr = addCepstral_sk(arr,1,110)
+            #arr = addCepstral_sk(arr,2,110)
+            arr = arr[:,num_features:].flatten()
             X_all[sample_idx] = arr
 
             sample_idx += 1

@@ -54,7 +54,7 @@ def normalizeFeatures(arr):
     b = (np.max(arr,axis=0)-np.min(arr,axis=0))
     return np.divide(a, b, out=np.zeros_like(a), where=b!=0)
     
-# Add FFT to numpy array. For sklearn.
+# Add FFT to numpy array. For sklearn. With Hanning.
 def addFFT_sk(data_array, feature, window_size):
     data_shape = list(data_array.shape)
     data_shape[1] += 1
@@ -65,7 +65,23 @@ def addFFT_sk(data_array, feature, window_size):
     new_data_array[0:data_array.shape[0],0:data_array.shape[1]] = data_array
 
     for i in range(0,data_shape[0],window_size):
-        new_data_array[i:i+window_size,-1] = np.abs(fft.rfft(data_array[i:i+window_size,feature],axis=0))
+        hanned_window = data_array[i:i+window_size,feature] * np.hanning(window_size)
+        new_data_array[i:i+window_size,-1] = np.abs(fft.rfft(hanned_window,axis=0))
+    return new_data_array
+
+# Add cepstral features to numpy array. For sklearn.
+def addCepstral_sk(data_array, feature, window_size):
+    data_shape = list(data_array.shape)
+    data_shape[1] += 1
+    new_data_array = np.zeros(data_shape)
+    if data_shape[0] % window_size != 0:
+        print("Window size of %d does not divide time length of %d",(window_size,data_shape[1]))
+        assert False
+    new_data_array[0:data_array.shape[0],0:data_array.shape[1]] = data_array
+
+    for i in range(0,data_shape[0],window_size):
+        hanned_window = data_array[i:i+window_size,feature] * np.hanning(window_size)
+        new_data_array[i:i+window_size,-1] = np.abs(fft.irfft(np.log(np.abs(fft.rfft(hanned_window,axis=0))+1)))
     return new_data_array
 
 def addGradient_sk(data_array, feature):
