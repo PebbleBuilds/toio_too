@@ -163,20 +163,22 @@ def main():
     test_y = np.array(test_y)
     model = Sequential([
         Flatten(input_shape=(len(tr_x[0]),)),
-        #Dense(512, activation='relu',kernel_regularizer=L2()),
-        #Dropout(0.3),
+        Dense(1024, activation='relu',kernel_regularizer=L2()),
+        Dropout(0.5),
+        Dense(512, activation='relu',kernel_regularizer=L2()),
+        Dropout(0.5),
         Dense(256, activation='relu',kernel_regularizer=L2()),
-        Dropout(0.3),
+        Dropout(0.5),
         Dense(128, activation='relu',kernel_regularizer=L2()),
-        Dropout(0.3),
+        Dropout(0.5),
         Dense(64, activation='relu',kernel_regularizer=L2()),
-        Dropout(0.3),
+        Dropout(0.5),
         Dense(32, activation='relu',kernel_regularizer=L2()),
         #Dropout(0.2),
         Dense(len(categories))
     ])
     loss_fn = SparseCategoricalCrossentropy(from_logits=True)
-    model.compile(optimizer=Adam(learning_rate=0.0001), loss=loss_fn, metrics=['accuracy'])
+    model.compile(optimizer=Adam(learning_rate=0.001,weight_decay=0.00001), loss=loss_fn, metrics=['accuracy'])
     model.fit(tr_x, tr_y, epochs=25)
 
     model.evaluate(test_x,  test_y, verbose=2)
