@@ -129,12 +129,33 @@ def main():
     tr_y = []
     test_x = []
     test_y = []
-    for x,y in dataPairs[:-20]:
+    #for x,y in dataPairs[:-20]:
+    for x,y in dataPairs:
         tr_x.append(x)
         tr_y.append(y)
-    for x,y in dataPairs[-20:]:
-        test_x.append(x)
-        test_y.append(y)
+    #for x,y in dataPairs[-20:]:
+    #    test_x.append(x)
+    #    test_y.append(y)
+
+    # Load test data
+    test_categories = [loadData("./csv_testdata/circle"), loadData("./csv_testdata/halfmills"),loadData("./csv_testdata/holding"),
+                loadData("./csv_testdata/juggleparabola"), loadData("./csv_testdata/jugglesideways"),loadData("./csv_testdata/randomturn"),
+                loadData("./csv_testdata/shaking"),loadData("./csv_testdata/windmill")]
+
+    for i, c in enumerate(test_categories):
+        for sample in c:
+            #print(len(sample))
+            #print(len(sample[0]))
+            #exit()
+            pads = dataPad(sample, max_len, n_features)
+            for p in pads:
+                x = transformSample(normalizeTime(p))
+                # Add FFT features
+                x += rfftFeatures(transformSample(sample), n_features, min_len // 2)
+                y = i
+                test_x.append(x)
+                test_y.append(y)
+
     # Compose model
     tr_x = np.array(tr_x)
     tr_y = np.array(tr_y)
@@ -157,6 +178,7 @@ def main():
     loss_fn = SparseCategoricalCrossentropy(from_logits=True)
     model.compile(optimizer=Adam(learning_rate=0.0001), loss=loss_fn, metrics=['accuracy'])
     model.fit(tr_x, tr_y, epochs=25)
+
     model.evaluate(test_x,  test_y, verbose=2)
 
 if __name__ == "__main__":
