@@ -43,22 +43,20 @@ def multi_feature_DTW(a, b, num_features=2):
 
 def main():
     categories = [loadData("./csv_data/november_11_collisions/hard_moving"),loadData("./csv_data/november_11_collisions/hard_still"),
-                           loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still"),
-                           loadData("./csv_data/november_11_collisions/no_collision")]
+                           loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still")]#,
+                           #loadData("./csv_data/november_11_collisions/no_collision")]
     
     # Split the data into tuples of processed data and labels
     dataPairs = []
 
     # Remove time and figure out max length
-    max_length = 0
+    max_length = 660
     num_samples = 0
     idx_to_keep = [5,6]
     for i, c in enumerate(categories):
         for sample_idx in range(0,len(c)):
             num_samples += 1
             c[sample_idx] = cropFeatures(c[sample_idx],idx_to_keep)
-            if len(c[sample_idx]) > max_length:
-                max_length = len(c[sample_idx])
     
     num_features = len(idx_to_keep)
     decimate_factor = 10
@@ -68,22 +66,27 @@ def main():
     
     # Convert to np array, decimate, pad, PCA, and flatten
     sample_idx = 0
-    for label, c in enumerate(categories):
+    for i, c in enumerate(categories):
         for arr in c:
+            # Classifying moving vs still (use idx 5 and 6)
+            if i == 0 or i == 2:
+                y_all[sample_idx] = 0
+            else:
+                y_all[sample_idx] = 1
             arr = np.asarray(arr)
             arr = decimate(arr,decimate_factor,axis=0)
-            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
-            arr = normalizeFeatures(arr)
-            arr = arr.flatten()
+            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
+            arr = addGradient_sk(arr,0)
+            arr = addGradient_sk(arr,1)
+            arr = arr[:,2:].flatten()
             X_all[sample_idx] = arr
-            y_all[sample_idx] = label
             sample_idx += 1
 
-    X_train, X_val, y_train, y_val = train_test_split(X_all, y_all, test_size=0.2, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(X_all, y_all, test_size=0.30, random_state=42)
 
     np.savetxt("foo.csv", X_train, delimiter=",")
             
-    knn = KNeighborsClassifier(metric=multi_feature_DTW)
+    knn = KNeighborsClassifier(metric=multi_feature_DTW,n_neighbors=1)
     knn.fit(X_train, y_train)
 
     print("Predicting...")

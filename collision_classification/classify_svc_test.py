@@ -21,11 +21,21 @@ from helpers import *
 import pandas as pd
 
 def main():
-    categories_train = [loadData("./csv_data/november_11_collisions/hard_moving"),loadData("./csv_data/november_11_collisions/hard_still"),
-                           loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still")]
+    # Test 1: Nov 11 train, Dec 10 test
+    # categories_train = [loadData("./csv_data/november_11_collisions/hard_moving"),loadData("./csv_data/november_11_collisions/hard_still"),
+    #                        loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still")]
     
-    categories_test = [loadData("./csv_data/dec_10_collisions/hard_moving"),loadData("./csv_data/dec_10_collisions/hard_still"),
-                           loadData("./csv_data/dec_10_collisions/soft_moving"),loadData("./csv_data/dec_10_collisions/soft_still")]
+    # categories_test = [loadData("./csv_data/dec_10_collisions/hard_moving"),loadData("./csv_data/dec_10_collisions/hard_still"),
+    #                        loadData("./csv_data/dec_10_collisions/soft_moving"),loadData("./csv_data/dec_10_collisions/soft_still")]
+    
+    # Test 2: Nov 11 + Dec 10 train, Dec 13 test
+    categories_train = [loadData("./csv_data/november_11_collisions/hard_moving")+loadData("./csv_data/dec_10_collisions/hard_moving"),
+                        loadData("./csv_data/november_11_collisions/hard_still") +loadData("./csv_data/dec_10_collisions/hard_still"),
+                        loadData("./csv_data/november_11_collisions/soft_moving")+loadData("./csv_data/dec_10_collisions/soft_moving"),
+                        loadData("./csv_data/november_11_collisions/soft_still")+loadData("./csv_data/dec_10_collisions/soft_still")]
+    
+    categories_test = [loadData("./csv_data/dec_13_collisions/hard_moving"),loadData("./csv_data/dec_13_collisions/hard_still"),
+                           loadData("./csv_data/dec_13_collisions/soft_moving"),loadData("./csv_data/dec_13_collisions/soft_still")]
 
     # Crop features. Max length will be 660.
     idx_to_keep = [1,2]

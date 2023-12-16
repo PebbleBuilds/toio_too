@@ -124,26 +124,21 @@ def test_loop(dataloader, model, loss_fn):
 def main():
     torch.manual_seed(0)
     categories = [loadData("./csv_data/november_11_collisions/hard_moving"),loadData("./csv_data/november_11_collisions/hard_still"),
-                           loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still"),
-                           loadData("./csv_data/november_11_collisions/no_collision")]
+                           loadData("./csv_data/november_11_collisions/soft_moving"),loadData("./csv_data/november_11_collisions/soft_still")]
     
     # Split the data into tuples of processed data and labels
     dataPairs = []
 
     # Remove time and figure out max length
-    max_length = 0
+    max_length = 660
     num_samples = 0
-    idx_to_keep = [1,2,3,5,6,4]
+    idx_to_keep = [1,2]
     for i, c in enumerate(categories):
         for sample_idx in range(0,len(c)):
             num_samples += 1
             c[sample_idx] = cropFeatures(c[sample_idx],idx_to_keep)
-            if len(c[sample_idx]) > max_length:
-                max_length = len(c[sample_idx])
     
     num_features = len(idx_to_keep)
-    decimate_factor = 1
-    max_length = max_length // decimate_factor
     X_all = np.zeros((num_samples, 1, max_length, num_features))
     y_all = np.zeros((num_samples))
     
@@ -151,59 +146,43 @@ def main():
     sample_idx = 0
     for label, c in enumerate(categories):
         for arr in c:
-            arr = np.asarray(arr)
-            arr = decimate(arr,decimate_factor,axis=0)
-            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="reflect")
-            arr = normalizeFeatures(arr)
-
-            # 5-class classification
-            X_all[sample_idx,0] = arr
-            y_all[sample_idx] = label 
-            num_classes = 5
-
-            # Classifying no collision vs collision
-            #X_all[sample_idx,0] = arr
-            #if label == 4:
-            #   y_all[sample_idx] = 0
-            #else:
-            #   y_all[sample_idx] = 1
-            #num_classes = 2
-
-            # Classifying still vs moving vs no collision
-            # X_all[sample_idx,0] = arr
-            # if label == 0 or label == 2:
-            #    y_all[sample_idx] = 0
-            # elif label == 1 or label == 3:
-            #    y_all[sample_idx] = 1
+            # Classifying moving vs still (use idx 5 and 6)
+            # if i == 0 or i == 2:
+            #     y_all[sample_idx] = 0
             # else:
-            #    y_all[sample_idx] = 2
-            # num_classes = 3
+            #     y_all[sample_idx] = 1
+            # arr = np.asarray(arr)
+            # arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
+            # arr = addGradient_sk(arr,0)
+            # arr = addGradient_sk(arr,1)
+            # arr = arr[:,2:]#.flatten()
+            # X_all[sample_idx,0] = arr
+
+            # Classifying soft vs hard
+            #if i == 0 or i == 1:
+            #    y_all[sample_idx] = 0
+            #else:
+            #    y_all[sample_idx] = 1
+            arr = np.asarray(arr)
+            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
+            arr = addCepstral_sk(arr,0,110)
+            arr = addCepstral_sk(arr,1,110)
+            arr = arr[:,2:]#.flatten()
+            X_all[sample_idx,0] = arr
 
             sample_idx += 1
-
-    # Normalize over time
-    #norms = np.linalg.norm(X_all,axis=2).reshape(num_samples,1,1,num_features)
-    #X_all = np.divide(X_all,norms)
-
-    # Add FFT
-    X_all = addFFT(X_all,0,20)
-    X_all = addFFT(X_all,1,20)
-    X_all = addFFT(X_all,2,20)
-    X_all = addFFT(X_all,3,20)
-    X_all = addFFT(X_all,4,20)
-    num_features += 5
 
     # Stuff into dataloaders
     tensor_x = torch.Tensor(X_all).float() # transform to torch tensor
     tensor_y = torch.Tensor(y_all).long()
     my_dataset = TensorDataset(tensor_x,tensor_y) # create your dataset
     generator = torch.Generator().manual_seed(42)
-    train_set, val_set = random_split(my_dataset,[0.8,0.2],generator)
+    train_set, val_set = random_split(my_dataset,[0.7,0.3],generator)
     train_dataloader = DataLoader(train_set, batch_size=batch_size) # create your dataloader
     val_dataloader = DataLoader(val_set, batch_size=batch_size)
 
     # Create the net
-    model = Net2(num_features, max_length, num_classes)
+    model = Net2(num_features, max_length, 2)
 
     # create your optimizer
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)

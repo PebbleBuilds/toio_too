@@ -74,7 +74,6 @@ def main():
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
             arr = addCepstral_sk(arr,0,110)
             arr = addCepstral_sk(arr,1,110)
-            #arr = addCepstral_sk(arr,2,110)
             arr = arr[:,num_features:].flatten()
             X_all[sample_idx] = arr
 
