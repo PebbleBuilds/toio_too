@@ -9,50 +9,10 @@ from scipy.signal import decimate
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 
-learning_rate = 1e-2
+learning_rate = 1e-4
 epochs = 10
 batch_size = 1
 
-# Add FFT to numpy array.
-def addFFT(data_array, feature, window_size):
-    print("Fix this! it's not keeping the old data")
-    assert False
-    print("Adding FFT feature for numpy array feature #",feature)
-    data_shape = list(data_array.shape)
-    data_shape[3] += 1
-    new_data_array = np.zeros(data_shape)
-    if data_shape[2] % window_size != 0:
-        print("Window size of %d does not divide time length of %d",(window_size,data_shape[2]))
-        assert False
-
-    for i in range(0,data_shape[2],window_size):
-        new_data_array[:,0,i:i+window_size,-1] = np.abs(fft.rfft(data_array[:,0,i:i+window_size,feature],axis=1))
-    return new_data_array
-
-class Net(nn.Module):
-
-    def __init__(self):
-        super(Net, self).__init__()
-        # 1 input image channel, 6 output channels, 3x3 square convolution
-        # kernel
-        self.conv1 = nn.Conv2d(1, 6, 3)
-        self.conv2 = nn.Conv2d(6, 16, 3)
-        # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(2608, 500)  # 3*3 from image dimension
-        self.fc2 = nn.Linear(500, 84)
-        self.fc3 = nn.Linear(84, num_classes)
-
-    def forward(self, x):
-        # Max pooling over a (2, 2) window
-        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-        # If the size is a square, you can specify with a single number
-        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        x = torch.flatten(x, 1) # flatten all dimensions except the batch dimension
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.sigmoid(self.fc3(x))
-        return x
-    
 class Net2(nn.Module):
 
     def __init__(self, num_features, max_length, num_classes):
@@ -144,7 +104,7 @@ def main():
     
     # Convert to np array, decimate, pad, and flatten
     sample_idx = 0
-    for label, c in enumerate(categories):
+    for i, c in enumerate(categories):
         for arr in c:
             # Classifying moving vs still (use idx 5 and 6)
             # if i == 0 or i == 2:
@@ -159,10 +119,10 @@ def main():
             # X_all[sample_idx,0] = arr
 
             # Classifying soft vs hard
-            #if i == 0 or i == 1:
-            #    y_all[sample_idx] = 0
-            #else:
-            #    y_all[sample_idx] = 1
+            if i == 0 or i == 1:
+                y_all[sample_idx] = 0
+            else:
+                y_all[sample_idx] = 1
             arr = np.asarray(arr)
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="edge")
             arr = addCepstral_sk(arr,0,110)
