@@ -92,13 +92,12 @@ def main():
             c[sample_idx] = cropFeatures(c[sample_idx],idx_to_keep)
             #if len(c[sample_idx]) > max_length:
             #    max_length = len(c[sample_idx])
-    
     X_val = np.zeros((num_samples, max_length * num_features))
     y_val = np.zeros((num_samples))
-    
+
     # Convert to np array, decimate, pad, PCA, and flatten
     sample_idx = 0
-    for label, c in enumerate(categories):
+    for label, c in enumerate(test_categories):
         for arr in c:
             arr = np.asarray(arr)
             arr = decimate(arr,decimate_factor,axis=0)
