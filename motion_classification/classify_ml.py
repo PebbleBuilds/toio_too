@@ -1,16 +1,13 @@
 import csv, os, glob
-import math
 import random
+import math
 import numpy as np
-import numpy.random
 from numpy.fft import rfft
-import tensorflow as tf
-import tensorflow.random
-from tensorflow.keras.layers import Dense, Dropout, Flatten
-from tensorflow.keras.losses import SparseCategoricalCrossentropy
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.regularizers import L1, L2, L1L2
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, ConfusionMatrixDisplay
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+
 
 # Load all csv file data from selected directory
 def loadData(path):
@@ -41,10 +38,7 @@ def loadData(path):
 
 # Make it explicit when we are truncating data
 def dataTrunc(data, n):
-    # Truncate to middle instead of beginning
-    dlen = len(data)
-    diff = (dlen - n) // 2
-    return data[diff:n+diff]
+    return data[:n]
 
 # Zero-pad the data
 def dataPad(data,max_len, n_features):
@@ -95,7 +89,7 @@ def main():
     # Number of features per sample
     n_features = 11
     # Use all possible pads if true, only one if false
-    allPads = False
+    allPads = True
     #for i, c in enumerate(categories):
     #    for sample in c:
     #        x = transformSample(normalizeTime(dataTrunc(sample, trunc_len)))
@@ -127,7 +121,6 @@ def main():
     # Shuffle the pairs' order
     random.seed(0)
     np.random.seed(0)
-    tf.random.set_seed(0)
     random.shuffle(dataPairs)
     tr_x = []
     tr_y = []
@@ -161,39 +154,35 @@ def main():
                 test_y.append(y)
                 if not allPads:
                     break
-
-    # Compose model
-    tr_x = np.array(tr_x)
-    tr_y = np.array(tr_y)
-    test_x = np.array(test_x)
-    test_y = np.array(test_y)
-    model = Sequential([
-        Flatten(input_shape=(len(tr_x[0]),)),
-        #Dense(8192, activation='relu',kernel_regularizer=L2()),
-        #Dropout(0.5),
-        #Dense(4096, activation='relu',kernel_regularizer=L2()),
-        #Dropout(0.5),
-        #Dense(2048, activation='relu',kernel_regularizer=L2()),
-        #Dropout(0.5),
-        Dense(1024, activation='relu',kernel_regularizer=L2()),
-        Dropout(0.5),
-        Dense(512, activation='relu',kernel_regularizer=L2()),
-        Dropout(0.5),
-        Dense(256, activation='relu',kernel_regularizer=L2()),
-        Dropout(0.5),
-        Dense(128, activation='relu',kernel_regularizer=L2()),
-        Dropout(0.5),
-        Dense(64, activation='relu',kernel_regularizer=L2()),
-        Dropout(0.5),
-        Dense(32, activation='relu',kernel_regularizer=L2()),
-        #Dropout(0.2),
-        Dense(len(categories))
-    ])
-    loss_fn = SparseCategoricalCrossentropy(from_logits=True)
-    model.compile(optimizer=Adam(learning_rate=0.0001), loss=loss_fn, metrics=['accuracy'])
-    model.fit(tr_x, tr_y, epochs=500)
-
-    model.evaluate(test_x,  test_y, verbose=2)
+    #rf = KNeighborsClassifier()
+    #rf = RandomForestClassifier()
+    rf = SVC()
+    rf.fit(tr_x,tr_y)
+    # Looking for overfitting as a sanity check
+    print("Overfitting:")
+    ps = rf.predict(tr_x)
+    # Count correct and total predictions to get ratio
+    tr_corr = 0
+    tr_count = 0
+    for p,y in zip(ps, tr_y):
+        #print("Predicted:", p, "\tGround Truth:", y)
+        if p == y:
+            tr_corr += 1
+        tr_count += 1
+    print()
+    print("Training Accuracy: ", (tr_corr/tr_count))
+    print()
+    val_corr = 0
+    val_count = 0
+    print("Validation:")
+    ps = rf.predict(test_x)
+    for p,y in zip(ps, test_y):
+        #print("Predicted:", p, "\tGround Truth:", y)
+        if p == y:
+            val_corr += 1
+        val_count += 1
+    print()
+    print("Validation Accuracy: ", (val_corr/val_count))
 
 if __name__ == "__main__":
     main()

@@ -63,9 +63,9 @@ def main():
     num_features = len(idx_to_keep)
     decimate_factor = 10
     max_length = max_length // decimate_factor
-    max_length += 3
-    X_all = np.zeros((num_samples, max_length * num_features))
-    y_all = np.zeros((num_samples))
+    max_length += 10
+    X_train = np.zeros((num_samples, max_length * num_features))
+    y_train = np.zeros((num_samples))
     
     # Convert to np array, decimate, pad, PCA, and flatten
     sample_idx = 0
@@ -76,11 +76,39 @@ def main():
             arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
             arr = normalizeFeatures(arr)
             arr = arr.flatten()
-            X_all[sample_idx] = arr
-            y_all[sample_idx] = label
+            X_train[sample_idx] = arr
+            y_train[sample_idx] = label
             sample_idx += 1
 
-    X_train, X_val, y_train, y_val = train_test_split(X_all, y_all, test_size=0.2, random_state=42)
+    test_categories = [loadData("./csv_testdata/circle"), loadData("./csv_testdata/halfmills"),loadData("./csv_testdata/holding"),
+                loadData("./csv_testdata/juggleparabola"), loadData("./csv_testdata/jugglesideways"),loadData("./csv_testdata/randomturn"),
+                loadData("./csv_testdata/shaking"),loadData("./csv_testdata/windmill")]
+    
+    num_samples = 0
+    idx_to_keep = [1,2,3,4,5,6]
+    for i, c in enumerate(test_categories):
+        for sample_idx in range(0,len(c)):
+            num_samples += 1
+            c[sample_idx] = cropFeatures(c[sample_idx],idx_to_keep)
+            #if len(c[sample_idx]) > max_length:
+            #    max_length = len(c[sample_idx])
+    
+    X_val = np.zeros((num_samples, max_length * num_features))
+    y_val = np.zeros((num_samples))
+    
+    # Convert to np array, decimate, pad, PCA, and flatten
+    sample_idx = 0
+    for label, c in enumerate(categories):
+        for arr in c:
+            arr = np.asarray(arr)
+            arr = decimate(arr,decimate_factor,axis=0)
+            #print(max_length, arr.shape[0])
+            arr = np.pad(arr,[(0,max_length - arr.shape[0]),(0,0)],mode="wrap")
+            arr = normalizeFeatures(arr)
+            arr = arr.flatten()
+            X_val[sample_idx] = arr
+            y_val[sample_idx] = label
+            sample_idx += 1
 
     np.savetxt("foo.csv", X_train, delimiter=",")
             
